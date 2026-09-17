@@ -1,0 +1,20 @@
+# Папки, генерируемые Unity (кэш, временные файлы)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+
+# Файлы IDE (Visual Studio, Rider)
+.vs/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.user
+
+# Системные файлы
+.DS_Store
+Thumbs.db
