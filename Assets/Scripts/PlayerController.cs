@@ -15,6 +15,12 @@ public class PlayerController : MonoBehaviour
     [Header("Атака")]
     public bool blockMovementDuringAttack = true;
     public float attackDuration = 0.7f;
+    public int attackDamage = 1;
+
+    [Header("Зона атаки")]
+    public Transform attackPoint;
+    public float attackRadius = 0.4f;
+    public LayerMask enemyLayer;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -24,7 +30,7 @@ public class PlayerController : MonoBehaviour
     private float moveInput;
     private bool isRunning;
     private bool isAttacking = false;
-    private int attackCounter = 0; // 0 = Attack 1, 1 = Attack 2
+    private int attackCounter = 0;
 
     void Start()
     {
@@ -45,20 +51,23 @@ public class PlayerController : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         }
 
+        // АТАКА
         if (Input.GetMouseButtonDown(0) && !isAttacking && isGrounded)
         {
             if (attackCounter == 0)
             {
-                animator.SetTrigger("Attack");   // Attack 1
+                animator.SetTrigger("Attack");
                 attackCounter = 1;
             }
             else
             {
-                animator.SetTrigger("Attack2");  // Attack 2
+                animator.SetTrigger("Attack2");
                 attackCounter = 0;
             }
 
             isAttacking = true;
+
+            DealDamage();
 
             Invoke("OnAttackFinished", attackDuration);
 
@@ -93,6 +102,28 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat("VelocityY", rb.velocity.y);
     }
 
+    void DealDamage()
+    {
+        if (attackPoint == null) return;
+
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(
+            attackPoint.position,
+            attackRadius,
+            enemyLayer
+        );
+
+        foreach (Collider2D enemy in hitEnemies)
+        {
+            if (enemy == null) continue;
+
+            EnemySkeleton skeleton = enemy.GetComponent<EnemySkeleton>();
+            if (skeleton != null && !skeleton.IsDead())
+            {
+                skeleton.TakeDamage(attackDamage);
+            }
+        }
+    }
+
     public void OnAttackFinished()
     {
         isAttacking = false;
@@ -100,8 +131,16 @@ public class PlayerController : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
-        if (groundCheck == null) return;
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        if (groundCheck != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        }
+
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
+        }
     }
 }
