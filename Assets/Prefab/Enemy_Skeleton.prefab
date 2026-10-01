@@ -136,7 +136,7 @@ BoxCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
@@ -180,8 +180,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5472f7442d09811478ece445818259c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 3
+  patrolSpeed: 1.5
+  chaseSpeed: 2.5
   patrolDistance: 3
+  usePatrolBounds: 1
+  leftBound: 0
+  rightBound: 0
+  detectionRange: 6
+  losePlayerRange: 8
   attackRange: 1.2
   attackDamage: 1
   attackCooldown: 1.5
@@ -191,7 +197,9 @@ MonoBehaviour:
   shieldCooldown: 6
   shieldChance: 0.5
   shieldTriggerRange: 3
+  hitDuration: 0.4
   groundCheck: {fileID: 0}
+  edgeCheck: {fileID: 0}
   groundCheckRadius: 0.15
   groundLayer:
     serializedVersion: 2

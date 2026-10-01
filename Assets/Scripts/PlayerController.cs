@@ -13,7 +13,8 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayer;
 
     [Header("Атака")]
-    public bool blockMovementDuringAttack = true;
+    public bool allowMovementDuringAttack = true;
+    public float attackMoveSpeedMultiplier = 0.5f;
     public float attackDuration = 0.7f;
     public int attackDamage = 1;
 
@@ -21,6 +22,13 @@ public class PlayerController : MonoBehaviour
     public Transform attackPoint;
     public float attackRadius = 0.4f;
     public LayerMask enemyLayer;
+
+    [Header("Слайд")]
+    public float slideSpeed = 12f;
+    public float slideDuration = 0.5f;
+    public float slideFriction = 18f;
+    public float stunRadius = 1.5f;
+    public float enemyStunExtra = 1f;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -30,7 +38,9 @@ public class PlayerController : MonoBehaviour
     private float moveInput;
     private bool isRunning;
     private bool isAttacking = false;
+    private bool isSliding = false;
     private int attackCounter = 0;
+    private float slideEndTime;
 
     void Start()
     {
@@ -43,17 +53,35 @@ public class PlayerController : MonoBehaviour
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
+        // Проверка окончания слайда
+        if (isSliding && Time.time >= slideEndTime)
+        {
+            EndSlide();
+        }
+
         moveInput = Input.GetAxisRaw("Horizontal");
         isRunning = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
-        if (Input.GetButtonDown("Jump") && isGrounded && !isAttacking)
+        // Прыжок
+        if (Input.GetButtonDown("Jump") && isGrounded && !isAttacking && !isSliding)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         }
 
-        // АТАКА
+        // СЛАЙД (ПКМ)
+        if (Input.GetMouseButtonDown(1) && !isSliding && !isAttacking && isGrounded)
+        {
+            StartSlide();
+        }
+
+        // АТАКА (ЛКМ) — может прервать слайд
         if (Input.GetMouseButtonDown(0) && !isAttacking && isGrounded)
         {
+            if (isSliding)
+            {
+                isSliding = false;   // Прерываем слайд
+            }
+
             if (attackCounter == 0)
             {
                 animator.SetTrigger("Attack");
@@ -67,39 +95,90 @@ public class PlayerController : MonoBehaviour
 
             isAttacking = true;
 
-            DealDamage();
-
+            // Урон в середине анимации атаки
+            Invoke("DealDamage", attackDuration / 2f);
             Invoke("OnAttackFinished", attackDuration);
 
-            if (blockMovementDuringAttack)
-            {
-                rb.velocity = new Vector2(0, rb.velocity.y);
-            }
+            // Тормозим персонажа после слайда
+            rb.velocity = new Vector2(0, rb.velocity.y);
         }
 
-        if (moveInput > 0) spriteRenderer.flipX = false;
-        else if (moveInput < 0) spriteRenderer.flipX = true;
+        // Поворот персонажа + AttackPoint
+        if (moveInput > 0)
+        {
+            spriteRenderer.flipX = false;
+            SetAttackPointDirection(1);
+        }
+        else if (moveInput < 0)
+        {
+            spriteRenderer.flipX = true;
+            SetAttackPointDirection(-1);
+        }
 
         UpdateAnimator();
     }
 
     void FixedUpdate()
     {
-        if (isAttacking && blockMovementDuringAttack)
+        if (isSliding)
+        {
+            float newSpeed = Mathf.MoveTowards(rb.velocity.x, 0, slideFriction * Time.fixedDeltaTime);
+            rb.velocity = new Vector2(newSpeed, rb.velocity.y);
+
+            StunNearbyEnemies();
+            return;
+        }
+
+        float currentSpeed = isRunning ? runSpeed : moveSpeed;
+
+        if (isAttacking && allowMovementDuringAttack)
+        {
+            currentSpeed *= attackMoveSpeedMultiplier;
+        }
+        else if (isAttacking && !allowMovementDuringAttack)
         {
             rb.velocity = new Vector2(0, rb.velocity.y);
             return;
         }
 
-        float currentSpeed = isRunning ? runSpeed : moveSpeed;
         rb.velocity = new Vector2(moveInput * currentSpeed, rb.velocity.y);
     }
 
-    void UpdateAnimator()
+    void StartSlide()
     {
-        animator.SetFloat("Speed", Mathf.Abs(rb.velocity.x));
-        animator.SetBool("IsGrounded", isGrounded);
-        animator.SetFloat("VelocityY", rb.velocity.y);
+        isSliding = true;
+        slideEndTime = Time.time + slideDuration;
+
+        int dir = spriteRenderer.flipX ? -1 : 1;
+        rb.velocity = new Vector2(dir * slideSpeed, rb.velocity.y);
+
+        animator.Play("Slide", 0, 0f);
+    }
+
+    void EndSlide()
+    {
+        isSliding = false;
+        animator.Play("Idle", 0, 0f);
+    }
+
+    void StunNearbyEnemies()
+    {
+        Collider2D[] enemies = Physics2D.OverlapCircleAll(
+            transform.position,
+            stunRadius,
+            enemyLayer
+        );
+
+        foreach (Collider2D enemy in enemies)
+        {
+            if (enemy == null) continue;
+
+            EnemySkeleton skeleton = enemy.GetComponent<EnemySkeleton>();
+            if (skeleton != null && !skeleton.IsDead() && !skeleton.IsStunned())
+            {
+                skeleton.Stun(slideDuration + enemyStunExtra);
+            }
+        }
     }
 
     void DealDamage()
@@ -129,6 +208,29 @@ public class PlayerController : MonoBehaviour
         isAttacking = false;
     }
 
+    public bool IsSliding()
+    {
+        return isSliding;
+    }
+
+    void SetAttackPointDirection(int dir)
+    {
+        if (attackPoint == null) return;
+
+        Vector3 pos = attackPoint.localPosition;
+        pos.x = Mathf.Abs(pos.x) * dir;
+        attackPoint.localPosition = pos;
+    }
+
+    void UpdateAnimator()
+    {
+        if (isSliding) return;
+
+        animator.SetFloat("Speed", Mathf.Abs(rb.velocity.x));
+        animator.SetBool("IsGrounded", isGrounded);
+        animator.SetFloat("VelocityY", rb.velocity.y);
+    }
+
     void OnDrawGizmosSelected()
     {
         if (groundCheck != null)
@@ -142,5 +244,8 @@ public class PlayerController : MonoBehaviour
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
         }
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, stunRadius);
     }
 }

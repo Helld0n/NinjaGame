@@ -3,13 +3,18 @@
 public class EnemySkeleton : MonoBehaviour
 {
     [Header("Настройки движения")]
-    public float moveSpeed = 1.5f;
+    public float patrolSpeed = 1.5f;
+    public float chaseSpeed = 2.5f;
     public float patrolDistance = 2f;
 
     [Header("Границы патрулирования")]
     public bool usePatrolBounds = true;
     public float leftBound = 0f;
     public float rightBound = 0f;
+
+    [Header("Обнаружение игрока")]
+    public float detectionRange = 6f;
+    public float losePlayerRange = 8f;
 
     [Header("Настройки атаки")]
     public float attackRange = 1.2f;
@@ -25,8 +30,7 @@ public class EnemySkeleton : MonoBehaviour
     public float shieldTriggerRange = 3f;
 
     [Header("Настройки получения урона")]
-    public float hitDuration = 0.4f;        // Сколько длится анимация получения урона
-    public float hitStunDuration = 0.3f;    // Сколько скелет стоит после удара (стан)
+    public float hitDuration = 0.5f;
 
     [Header("Ссылки")]
     public Transform groundCheck;
@@ -49,11 +53,14 @@ public class EnemySkeleton : MonoBehaviour
     private bool isDead = false;
     private bool isShielding = false;
     private bool isHit = false;
+    private bool isChasing = false;
+    private bool isStunned = false;
     private float lastAttackTime;
     private float attackEndTime;
     private float lastShieldTime;
     private float shieldEndTime;
     private float hitEndTime;
+    private float stunEndTime;
 
     void Start()
     {
@@ -82,12 +89,27 @@ public class EnemySkeleton : MonoBehaviour
     {
         if (isDead) return;
 
-        // Проверка окончания состояний
+        // ─── СТАН ОТ СЛАЙДА ───────────────────────────
+        if (isStunned)
+        {
+            if (Time.time >= stunEndTime)
+            {
+                isStunned = false;
+                animator.Play("SK_Idle", 0, 0f);
+            }
+            else
+            {
+                rb.velocity = new Vector2(0, rb.velocity.y);
+                return;
+            }
+        }
+
+        // ─── ТАЙМЕРЫ СОСТОЯНИЙ ────────────────────────
         if (isAttacking && Time.time >= attackEndTime) EndAttack();
         if (isShielding && Time.time >= shieldEndTime) EndShield();
         if (isHit && Time.time >= hitEndTime) EndHit();
 
-        // Если в стане от удара — стоим на месте
+        // ─── СТАН ОТ УРОНА ────────────────────────────
         if (isHit)
         {
             rb.velocity = new Vector2(0, rb.velocity.y);
@@ -98,8 +120,24 @@ public class EnemySkeleton : MonoBehaviour
             ? Vector2.Distance(transform.position, player.position)
             : 999f;
 
-        // Щит
-        if (canUseShield && !isShielding && !isAttacking &&
+        // ─── ОБНАРУЖЕНИЕ ИГРОКА ───────────────────────
+        if (!isChasing && distanceToPlayer <= detectionRange)
+        {
+            isChasing = true;
+        }
+        else if (isChasing && distanceToPlayer > losePlayerRange)
+        {
+            isChasing = false;
+        }
+
+        // ─── ЩИТ ──────────────────────────────────────
+        if (isShielding)
+        {
+            rb.velocity = new Vector2(0, rb.velocity.y);
+            return;
+        }
+
+        if (canUseShield && !isShielding && !isAttacking && isChasing &&
             distanceToPlayer <= shieldTriggerRange &&
             Time.time - lastShieldTime > shieldCooldown)
         {
@@ -114,26 +152,33 @@ public class EnemySkeleton : MonoBehaviour
             }
         }
 
-        if (isShielding)
-        {
-            rb.velocity = new Vector2(0, rb.velocity.y);
-            return;
-        }
-
-        // Атака
-        if (!isAttacking &&
+        // ─── АТАКА ────────────────────────────────────
+        if (isChasing &&
+            !isAttacking &&
             distanceToPlayer <= attackRange &&
             Time.time - lastAttackTime > attackCooldown)
         {
+            FacePlayer();
             Attack();
             return;
         }
 
-        if (!isAttacking) Patrol();
+        // ─── ДВИЖЕНИЕ ─────────────────────────────────
+        if (isChasing)
+        {
+            ChasePlayer(distanceToPlayer);
+        }
+        else
+        {
+            Patrol();
+        }
 
         UpdateAnimator();
     }
 
+    // ─────────────────────────────────────────────
+    // ПАТРУЛИРОВАНИЕ
+    // ─────────────────────────────────────────────
     void Patrol()
     {
         bool atEdgeUnderFeet = groundCheck != null &&
@@ -155,7 +200,7 @@ public class EnemySkeleton : MonoBehaviour
             direction = 1;
         }
 
-        float targetSpeed = direction * moveSpeed;
+        float targetSpeed = direction * patrolSpeed;
         rb.velocity = new Vector2(
             Mathf.Lerp(rb.velocity.x, targetSpeed, Time.deltaTime * 5f),
             rb.velocity.y
@@ -164,6 +209,50 @@ public class EnemySkeleton : MonoBehaviour
         spriteRenderer.flipX = direction < 0;
     }
 
+    // ─────────────────────────────────────────────
+    // ПОГОНЯ ЗА ИГРОКОМ
+    // ─────────────────────────────────────────────
+    void ChasePlayer(float distanceToPlayer)
+    {
+        if (player == null) return;
+
+        if (distanceToPlayer <= attackRange)
+        {
+            rb.velocity = new Vector2(0, rb.velocity.y);
+            FacePlayer();
+            return;
+        }
+
+        int directionToPlayer = player.position.x > transform.position.x ? 1 : -1;
+
+        Vector3 edgePos = transform.position + new Vector3(directionToPlayer * 0.4f, -0.5f, 0);
+        bool atEdgeAhead = !Physics2D.OverlapCircle(edgePos, groundCheckRadius, groundLayer);
+
+        if (atEdgeAhead)
+        {
+            rb.velocity = new Vector2(0, rb.velocity.y);
+            FacePlayer();
+            return;
+        }
+
+        float targetSpeed = directionToPlayer * chaseSpeed;
+        rb.velocity = new Vector2(
+            Mathf.Lerp(rb.velocity.x, targetSpeed, Time.deltaTime * 5f),
+            rb.velocity.y
+        );
+
+        spriteRenderer.flipX = directionToPlayer < 0;
+    }
+
+    void FacePlayer()
+    {
+        if (player == null) return;
+        spriteRenderer.flipX = player.position.x < transform.position.x;
+    }
+
+    // ─────────────────────────────────────────────
+    // АТАКА
+    // ─────────────────────────────────────────────
     void Attack()
     {
         isAttacking = true;
@@ -173,15 +262,16 @@ public class EnemySkeleton : MonoBehaviour
         animator.SetBool("IsShielding", false);
         animator.Play("SK_Attack", 0, 0f);
 
-        DealDamageToPlayer();
+        // Урон наносится в СЕРЕДИНЕ анимации
+        Invoke("DealDamageToPlayer", attackDuration / 2f);
     }
 
     void DealDamageToPlayer()
     {
-        if (player == null) return;
+        if (player == null || isDead) return;
 
         float distance = Vector2.Distance(transform.position, player.position);
-        if (distance <= attackRange)
+        if (distance <= attackRange + 0.3f)
         {
             HealthSystem playerHealth = player.GetComponent<HealthSystem>();
             if (playerHealth != null)
@@ -195,15 +285,19 @@ public class EnemySkeleton : MonoBehaviour
     {
         isAttacking = false;
         if (Mathf.Abs(rb.velocity.x) > 0.1f) animator.Play("SK_Walk", 0, 0f);
-        else animator.Play("SK_idle", 0, 0f);
+        else animator.Play("SK_Idle", 0, 0f);
     }
 
+    // ─────────────────────────────────────────────
+    // ЩИТ
+    // ─────────────────────────────────────────────
     void StartShield()
     {
         isShielding = true;
         lastShieldTime = Time.time;
         shieldEndTime = Time.time + shieldDuration;
         rb.velocity = new Vector2(0, rb.velocity.y);
+        FacePlayer();
         animator.SetBool("IsShielding", true);
         animator.Play("SK_Shield", 0, 0f);
     }
@@ -212,13 +306,18 @@ public class EnemySkeleton : MonoBehaviour
     {
         isShielding = false;
         animator.SetBool("IsShielding", false);
-        animator.Play("SK_idle", 0, 0f);
+        animator.Play("SK_Idle", 0, 0f);
     }
 
+    // ─────────────────────────────────────────────
+    // УРОН / СТАН / СМЕРТЬ
+    // ─────────────────────────────────────────────
     public void TakeDamage(int damage)
     {
         if (isDead) return;
         if (isShielding) return;
+        if (isHit) return;
+        if (isStunned) return;
 
         currentHealth -= damage;
 
@@ -233,7 +332,6 @@ public class EnemySkeleton : MonoBehaviour
 
     void StartHit()
     {
-
         isAttacking = false;
         isShielding = false;
         animator.SetBool("IsShielding", false);
@@ -242,7 +340,6 @@ public class EnemySkeleton : MonoBehaviour
         hitEndTime = Time.time + hitDuration;
         rb.velocity = new Vector2(0, rb.velocity.y);
 
-        animator.SetTrigger("Hit");
         animator.Play("SK_Hit", 0, 0f);
     }
 
@@ -253,7 +350,30 @@ public class EnemySkeleton : MonoBehaviour
         if (Mathf.Abs(rb.velocity.x) > 0.1f)
             animator.Play("SK_Walk", 0, 0f);
         else
-            animator.Play("SK_idle", 0, 0f);
+            animator.Play("SK_Idle", 0, 0f);
+    }
+
+    // ─── СТАН ОТ СЛАЙДА ───────────────────────────
+    public void Stun(float duration)
+    {
+        if (isDead) return;
+
+        // Прерываем всё, что делал скелет
+        isAttacking = false;
+        isShielding = false;
+        isHit = false;
+        animator.SetBool("IsShielding", false);
+
+        isStunned = true;
+        stunEndTime = Time.time + duration;
+        rb.velocity = new Vector2(0, rb.velocity.y);
+
+        animator.Play("SK_Idle", 0, 0f);
+    }
+
+    public bool IsStunned()
+    {
+        return isStunned;
     }
 
     public bool IsDead()
@@ -266,15 +386,24 @@ public class EnemySkeleton : MonoBehaviour
         isDead = true;
         isShielding = false;
         isHit = false;
+        isAttacking = false;
+        isStunned = false;
         rb.velocity = Vector2.zero;
         animator.SetBool("IsShielding", false);
         animator.Play("SK_Death", 0, 0f);
+
+        // Сообщаем LevelManager, что скелет убит
+        if (LevelManager.instance != null)
+        {
+            LevelManager.instance.AddKill();
+        }
+
         Destroy(gameObject, 2f);
     }
 
     void UpdateAnimator()
     {
-        if (isDead || isAttacking || isShielding || isHit) return;
+        if (isDead || isAttacking || isShielding || isHit || isStunned) return;
         animator.SetFloat("Speed", Mathf.Abs(rb.velocity.x));
     }
 
@@ -297,6 +426,12 @@ public class EnemySkeleton : MonoBehaviour
 
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, shieldTriggerRange);
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
+
+        Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
+        Gizmos.DrawWireSphere(transform.position, losePlayerRange);
 
         if (usePatrolBounds)
         {

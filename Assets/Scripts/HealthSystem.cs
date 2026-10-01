@@ -8,14 +8,20 @@ public class HealthSystem : MonoBehaviour
     public int currentHealth;
 
     [Header("UI")]
-    public Image hpBarImage;              // Ссылка на Image в Canvas
-    public Sprite[] hpBarSprites;         // 12 спрайтов бара (от 0 до 11)
+    public Image hpBarImage;
+    public Sprite[] hpBarSprites;
 
     [Header("Ссылки")]
-    public Animator animator;             // Animator игрока (для анимации смерти)
+    public Animator animator;
+    public PlayerController playerController;
+    public DeathScreenManager deathScreenManager;   // ← новое поле
 
     void Start()
     {
+        if (animator == null) animator = GetComponent<Animator>();
+        if (playerController == null) playerController = GetComponent<PlayerController>();
+        if (deathScreenManager == null) deathScreenManager = FindObjectOfType<DeathScreenManager>();
+
         currentHealth = maxHealth;
         UpdateHPBar();
     }
@@ -24,16 +30,14 @@ public class HealthSystem : MonoBehaviour
     {
         if (currentHealth <= 0) return;
 
-        currentHealth -= damage;
+        if (playerController != null && playerController.IsSliding()) return;
 
+        currentHealth -= damage;
         if (currentHealth < 0) currentHealth = 0;
 
         UpdateHPBar();
 
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        if (currentHealth <= 0) Die();
     }
 
     public void Heal(int amount)
@@ -47,10 +51,7 @@ public class HealthSystem : MonoBehaviour
     {
         if (hpBarImage == null || hpBarSprites == null || hpBarSprites.Length == 0) return;
 
-        // Индекс спрайта: 0 = пусто, 11 = полный
         int spriteIndex = Mathf.Clamp(currentHealth - 1, 0, hpBarSprites.Length - 1);
-
-        // Если HP = 0 — показываем пустой бар (индекс 0)
         if (currentHealth <= 0) spriteIndex = 0;
 
         hpBarImage.sprite = hpBarSprites[spriteIndex];
@@ -60,12 +61,24 @@ public class HealthSystem : MonoBehaviour
     {
         Debug.Log("Игрок умер!");
 
-        // Проигрываем анимацию смерти
+        if (playerController != null) playerController.enabled = false;
+
         if (animator != null)
         {
-            animator.SetTrigger("Dead");
+            animator.SetTrigger("IsDead");
         }
 
-        // Здесь можно добавить: перезапуск уровня, экран Game Over и т.д.
+        if (deathScreenManager != null)
+        {
+            Invoke("ShowDeathScreen", 2f);
+        }
+    }
+
+    void ShowDeathScreen()
+    {
+        if (deathScreenManager != null)
+        {
+            deathScreenManager.ShowDeathScreen();
+        }
     }
 }
