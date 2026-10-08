@@ -1,8 +1,7 @@
-﻿using UnityEngine;
-using TMPro;
-using UnityEngine.UI;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Diagnostics;
+using UnityEngine.UI;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -13,9 +12,11 @@ public class DialogueManager : MonoBehaviour
     public TextMeshProUGUI npcText;
     public GameObject choicePanel;
 
-    [Header("Кнопки выбора")]
+    [Header("Кнопки")]
     public Button acceptButton;
     public Button declineButton;
+
+    private string currentQuestScene = "QuestScene";
 
     void Awake()
     {
@@ -25,25 +26,29 @@ public class DialogueManager : MonoBehaviour
 
     void Start()
     {
-        dialoguePanel.SetActive(false);
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
     }
 
-    public void StartDialogue(string npcDialogue)
+    // Запуск диалога с параметрами
+    public void StartDialogue(string dialogueText, string npcName, string questScene)
     {
-        dialoguePanel.SetActive(true);
-        npcText.text = npcDialogue;
-        choicePanel.SetActive(true);
+        if (dialoguePanel != null) dialoguePanel.SetActive(true);
+        if (npcText != null) npcText.text = dialogueText;
+        if (choicePanel != null) choicePanel.SetActive(true);
+
+        currentQuestScene = questScene;   // Запоминаем, куда перебросить игрока
     }
 
     public void OnAcceptQuest()
     {
-        UnityEngine.Debug.Log("Квест принят! Загружаем сцену...");
-        SceneManager.LoadScene("QuestScene");
+        Debug.Log("Квест принят! Загружаем сцену: " + currentQuestScene);
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        SceneManager.LoadScene(currentQuestScene);
     }
 
     public void OnDeclineQuest()
     {
-        UnityEngine.Debug.Log("Квест отклонён.");
-        dialoguePanel.SetActive(false);
+        Debug.Log("Квест отклонён.");
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
     }
 }

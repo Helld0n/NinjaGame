@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2504669486124793450
+--- !u!1 &8308954264906691544
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,13 +8,43 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2504669486124793447}
-  - component: {fileID: 2504669486124793444}
-  - component: {fileID: 2504669486124793445}
-  - component: {fileID: 2504669486124793443}
-  - component: {fileID: 2504669486124793440}
-  - component: {fileID: 2504669486124793441}
-  - component: {fileID: 2504669486124793446}
+  - component: {fileID: 8308954264906691543}
+  m_Layer: 8
+  m_Name: GroundCheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8308954264906691543
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8308954264906691544}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.12, y: -0.56, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 8308954265635433950}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8308954265635433925
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8308954265635433950}
+  - component: {fileID: 8308954265635433951}
+  - component: {fileID: 8308954265635433920}
+  - component: {fileID: 8308954265635433921}
+  - component: {fileID: 8308954265635433922}
+  - component: {fileID: 8308954265635433923}
+  - component: {fileID: 8308954265635433924}
   m_Layer: 9
   m_Name: Enemy_Skeleton
   m_TagString: Untagged
@@ -22,27 +52,28 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2504669486124793447
+--- !u!4 &8308954265635433950
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2504669486124793450}
+  m_GameObject: {fileID: 8308954265635433925}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 6.464, y: -1.439, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 8308954264906691543}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &2504669486124793444
+--- !u!212 &8308954265635433951
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2504669486124793450}
+  m_GameObject: {fileID: 8308954265635433925}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -86,14 +117,14 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!95 &2504669486124793445
+--- !u!95 &8308954265635433920
 Animator:
   serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2504669486124793450}
+  m_GameObject: {fileID: 8308954265635433925}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: d3fbb32008f5d3c47bf4f59a354bbbd1, type: 2}
@@ -105,14 +136,14 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
---- !u!50 &2504669486124793443
+--- !u!50 &8308954265635433921
 Rigidbody2D:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2504669486124793450}
+  m_GameObject: {fileID: 8308954265635433925}
   m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
@@ -126,13 +157,13 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!61 &2504669486124793440
+--- !u!61 &8308954265635433922
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2504669486124793450}
+  m_GameObject: {fileID: 8308954265635433925}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
@@ -152,13 +183,13 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1.0227273, y: 1.1590909}
   m_EdgeRadius: 0
---- !u!70 &2504669486124793441
+--- !u!70 &8308954265635433923
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2504669486124793450}
+  m_GameObject: {fileID: 8308954265635433925}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
@@ -168,21 +199,21 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 1.0227273, y: 1.1590909}
   m_Direction: 0
---- !u!114 &2504669486124793446
+--- !u!114 &8308954265635433924
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2504669486124793450}
+  m_GameObject: {fileID: 8308954265635433925}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5472f7442d09811478ece445818259c4, type: 3}
+  m_Script: {fileID: 11500000, guid: 84c8d4fbdf464fa42831257baf29f1df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   patrolSpeed: 1.5
   chaseSpeed: 2.5
-  patrolDistance: 3
+  patrolDistance: 2
   usePatrolBounds: 1
   leftBound: 0
   rightBound: 0
@@ -190,14 +221,18 @@ MonoBehaviour:
   losePlayerRange: 8
   attackRange: 1.2
   attackDamage: 1
-  attackCooldown: 1.5
-  attackDuration: 1
+  attackCooldown: 2
+  attackDuration: 0.8
   canUseShield: 1
   shieldDuration: 2
   shieldCooldown: 6
   shieldChance: 0.5
   shieldTriggerRange: 3
-  hitDuration: 0.4
+  hitDuration: 0.5
+  canDropHealth: 1
+  healthPickupPrefab: {fileID: 2472633832005404014, guid: a0d362ad934d4e140abc27fbdca64262,
+    type: 3}
+  dropChance: 0.3
   groundCheck: {fileID: 0}
   edgeCheck: {fileID: 0}
   groundCheckRadius: 0.15
@@ -206,3 +241,10 @@ MonoBehaviour:
     m_Bits: 256
   player: {fileID: 0}
   maxHealth: 3
+  prefix: SK_
+  idleName: Idle
+  moveName: Walk
+  attackName: Attack
+  hitName: Hit
+  deathName: Death
+  shieldName: Shield

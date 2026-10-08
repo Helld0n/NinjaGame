@@ -191,14 +191,14 @@ public class PlayerController : MonoBehaviour
             enemyLayer
         );
 
-        foreach (Collider2D enemy in hitEnemies)
+        foreach (Collider2D enemyCol in hitEnemies)
         {
-            if (enemy == null) continue;
+            if (enemyCol == null) continue;
 
-            EnemySkeleton skeleton = enemy.GetComponent<EnemySkeleton>();
-            if (skeleton != null && !skeleton.IsDead())
+            EnemyBase enemy = enemyCol.GetComponent<EnemyBase>();
+            if (enemy != null && !enemy.IsDead())
             {
-                skeleton.TakeDamage(attackDamage);
+                enemy.TakeDamage(attackDamage);
             }
         }
     }

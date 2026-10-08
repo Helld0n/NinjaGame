@@ -2,8 +2,16 @@
 
 public class NPCDialogueZone : MonoBehaviour
 {
+    [Header("UI")]
     public GameObject dialogueUI;
     public InteractPrompt prompt;
+
+    [Header("Данные NPC")]
+    public string npcName = "NPC";
+    [TextArea(3, 6)]
+    public string dialogueText = "Приветствую, путник!";
+    public string questSceneName = "QuestScene";   // Имя сцены, куда перебросит
+
     private bool playerInZone = false;
 
     void Start()
@@ -36,7 +44,7 @@ public class NPCDialogueZone : MonoBehaviour
         {
             if (DialogueManager.instance != null)
             {
-                DialogueManager.instance.StartDialogue("Приветствую, путник! Поможешь мне с одним делом?");
+                DialogueManager.instance.StartDialogue(dialogueText, npcName, questSceneName);
                 if (prompt != null) prompt.Hide();
             }
         }

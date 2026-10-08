@@ -14,7 +14,7 @@ public class HealthSystem : MonoBehaviour
     [Header("Ссылки")]
     public Animator animator;
     public PlayerController playerController;
-    public DeathScreenManager deathScreenManager;   // ← новое поле
+    public DeathScreenManager deathScreenManager;
 
     void Start()
     {
@@ -30,6 +30,7 @@ public class HealthSystem : MonoBehaviour
     {
         if (currentHealth <= 0) return;
 
+        // Неуязвимость во время слайда
         if (playerController != null && playerController.IsSliding()) return;
 
         currentHealth -= damage;
@@ -42,9 +43,19 @@ public class HealthSystem : MonoBehaviour
 
     public void Heal(int amount)
     {
+        if (currentHealth <= 0) return;   // Мёртвого не лечим
+
         currentHealth += amount;
         if (currentHealth > maxHealth) currentHealth = maxHealth;
+
         UpdateHPBar();
+    }
+
+    public void ForceDeath()
+    {
+        currentHealth = 0;
+        UpdateHPBar();
+        Die();
     }
 
     void UpdateHPBar()
